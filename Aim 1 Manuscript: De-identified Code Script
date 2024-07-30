@@ -1,0 +1,130 @@
+## Aim 1: The impacts of viral interaction on household transmission of respiratory viruses ##
+
+## Publicly available de-identified code with new master_id's and master_house_id's ## 
+
+## Author: Jessica Clark Ibiebele ## 
+
+# Install packages
+install.packages("lmerTest")
+install.packages("tidyverse")
+install.packages("haven")
+install.packages("readxl")
+install.packages("writexl")
+install.packages("lme4", type = "source")
+install.packages("multilevelmod")
+install.packages("tidymodels")
+install.packages("sjPlot")
+install.packages("pscl")
+install.packages("vcd")
+install.packages("performance")
+install.packages("DHARMa")
+install.packages("blmeco") 
+
+# Load packages
+library(lme4)
+library(lmerTest)
+library(multilevelmod)
+library(tidymodels)
+library(sjPlot)
+library(tidyverse)
+library(haven)
+library(readxl)
+library(writexl)
+library(pscl)
+library(vcd)
+library(performance)
+library(DHARMa)
+library(blmeco)
+
+# Set working directory
+setwd('')
+
+############# Household-level mixed effects Poisson regression #############
+
+## Influenza A Virus Clusters
+### Load data set
+flua_clusters_condensed_newhouseid <- read_xlsx("aim1_flua_clusters_condensed_newhouseid.xlsx")
+### Fit model 
+model_flua <- glmer(n_secondary ~ coinfected_index + age_index + HOUSEHOLD_TOTAL + 
+                      offset(log_time_atrisk) + (1|NEW_HOUSE_ID),
+                    data = flua_clusters_condensed_newhouseid,
+                    family = poisson)
+summary(model_flua)
+### Get IRR, CI, p-values 
+tab_model(model_flua)
+
+## Influenza B Virus Clusters
+### Load data set
+flub_clusters_condensed_newhouseid <- read_xlsx("aim1_flub_clusters_condensed_newhouseid.xlsx")
+### Fit model 
+model_flub <- glmer(n_secondary ~ coinfected_index + age_index + HOUSEHOLD_TOTAL + 
+                      offset(log_time_atrisk) + (1|NEW_HOUSE_ID),
+                    data = flub_clusters_condensed_newhouseid,
+                    family = poisson)
+summary(model_flub)
+### Get IRR, CI, p-values 
+tab_model(model_flub)
+
+## RSV Clusters
+### Load data set
+rsv_clusters_condensed_newhouseid <- read_xlsx("aim1_rsv_clusters_condensed_newhouseid.xlsx")
+### Fit model 
+model_rsv <- glmer(n_secondary ~ coinfected_index + age_index + HOUSEHOLD_TOTAL + 
+                      offset(log_time_atrisk) + (1|NEW_HOUSE_ID),
+                    data = rsv_clusters_condensed_newhouseid,
+                    family = poisson)
+summary(model_rsv)
+### Get IRR, CI, p-values 
+tab_model(model_rsv)
+
+############# Individual-level mixed effects logistic regression #############
+
+## Influenza A clusters
+### Load data set 
+flua_clusters_newids_noindex <- read_xlsx("aim1_flua_clusters_newids_noindex.xlsx") 
+### NOTE: If receive error, change variables to factors
+flua_clusters_newids_noindex$SECONDARY_CASE <- as.factor(flua_clusters_newids_noindex$SECONDARY_CASE)
+flua_clusters_newids_noindex$four_level <- as.factor(flua_clusters_newids_noindex$four_level)
+flua_clusters_newids_noindex$age_group <- as.factor(flua_clusters_newids_noindex$age_group)
+flua_clusters_newids_noindex$age_index <- as.factor(flua_clusters_newids_noindex$age_index)
+flua_clusters_newids_noindex$SEX <- as.factor(flua_clusters_newids_noindex$SEX)
+flua_clusters_newids_noindex$fluvax_14days <- as.factor(flua_clusters_newids_noindex$fluvax_14days)
+
+### Fit model
+glmer_flua_4level_final <- glmer(SECONDARY_CASE ~ four_level + age_group + SEX + age_index 
+                                 + fluvax_14days + (1|NEW_HOUSE_ID),
+                                 family = binomial(link = "logit"),
+                                 data = flua_clusters_newids_noindex,
+                                 control = glmerControl(optimizer = "bobyqa", 
+                                                        optCtrl = list(maxfun = 100000)))
+summary(glmer_flua_4level_final)
+### Get OR, CI, p-values
+tab_model(glmer_flua_4level_final)
+
+## Influenza B clusters
+### Load data set 
+flub_clusters_newids_noindex <- read_xlsx("aim1_flub_clusters_newids_noindex.xlsx") 
+### Fit model
+glmer_flub_4level_final <- glmer(SECONDARY_CASE ~ four_level + age_group + SEX + age_index 
+                                 + fluvax_14days + (1|NEW_HOUSE_ID),
+                                 family = binomial(link = "logit"),
+                                 data = flub_clusters_newids_noindex,
+                                 control = glmerControl(optimizer = "bobyqa", 
+                                                        optCtrl = list(maxfun = 100000)))
+summary(glmer_flub_4level_final)
+### Get OR, CI, p-values
+tab_model(glmer_flub_4level_final)
+
+## RSV clusters
+### Load data set 
+rsv_clusters_newids_noindex <- read_xlsx("aim1_rsv_clusters_newids_noindex.xlsx") 
+### Fit model
+glmer_rsv_4level_final <- glmer(SECONDARY_CASE ~ four_level + age_group + SEX + age_index 
+                                 + fluvax_14days + (1|NEW_HOUSE_ID),
+                                 family = binomial(link = "logit"),
+                                 data = rsv_clusters_newids_noindex,
+                                 control = glmerControl(optimizer = "bobyqa", 
+                                                        optCtrl = list(maxfun = 100000)))
+summary(glmer_rsv_4level_final)
+### Get OR, CI, p-values
+tab_model(glmer_rsv_4level_final)
